@@ -1,0 +1,48 @@
+[project]
+name = "snx-staking-tg-bot"
+version = "0.1.0"
+description = "Synthetix staking telegram bot"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "sqlmodel>=0.0.22",
+    "tenacity>=9.0.0",
+    "web3>=7.6.1",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.1.0",
+    "ruff>=0.8.6",
+]
+
+[tool.ruff]
+fix = true
+line-length = 99
+src = ["app"]
+
+[tool.ruff.lint]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+    # isort
+    "I",
+    # annotations
+    "ANN",
+    # flake8-quotes
+    "Q",
+    # flake8-print
+    "T20",
+    # pep8-naming
+    "N",
+    # flake8-tidy-imports
+    "TID",
+]
