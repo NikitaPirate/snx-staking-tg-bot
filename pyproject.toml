@@ -46,3 +46,6 @@ select = [
     # flake8-tidy-imports
     "TID",
 ]
+[tool.ruff.lint.flake8-annotations]
+allow-star-arg-any = true
+suppress-none-returning = true

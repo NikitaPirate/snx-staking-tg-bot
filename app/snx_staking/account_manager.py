@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 from collections import defaultdict
+from decimal import Decimal
 
 from eth_typing import Address, BlockIdentifier
 from eth_utils import to_checksum_address
@@ -8,16 +9,7 @@ from eth_utils import to_checksum_address
 from app.common import Chain, SNXData
 from app.data_access import UOWFactoryType
 from app.models import Account
-from app.snx_staking.synthetix import Synthetix
-from app.snx_staking.synthetix.web3_constants import (
-    BURN,
-    FEES_CLAIMED,
-    FLAGGED_FOR_LIQUIDATION,
-    MINT,
-    RECEIVE,
-    REMOVED_FROM_LIQUIDATION,
-    SEND,
-)
+from app.snx_staking.synthetix import EventName, Synthetix
 
 
 class AccountManager:
@@ -55,8 +47,8 @@ class AccountManager:
         async with self._uow_factory() as uow:
             account = await uow.accounts.get_by_address_chain(address, self.chain)
 
-            account.snx_count = account_data.collateral
-            account.sds_count = account_data.debt_share
+            account.snx_count = Decimal(str(account_data.collateral))
+            account.sds_count = Decimal(str(account_data.debt_share))
             account.claimable_snx = account_data.fees_available[1]
 
             liquidation_deadline = (
@@ -91,10 +83,11 @@ class AccountManager:
             self._apply_events(account, events)
 
             collateral_updated = self._snx_data.snx_updated or any(
-                event["type"] in {SEND, RECEIVE, FEES_CLAIMED} for event in events
+                event["type"] in {EventName.SEND, EventName.RECEIVE, EventName.FEES_CLAIMED}
+                for event in events
             )
             debt_updated = self._snx_data.sds_updated or any(
-                event["type"] in {MINT, BURN} for event in events
+                event["type"] in {EventName.MINT, EventName.BURN} for event in events
             )
 
             if collateral_updated:
@@ -141,39 +134,43 @@ class AccountManager:
         events = defaultdict(list)
 
         for transfer in transfers:
-            if transfer.from_address == self._synthetix.vesting_contract:
+            if transfer.from_address == self._synthetix.vesting_contract_address:
                 continue
 
-            events[SEND].append({"account": transfer["from"], "amount": transfer["value"]})
-            events[RECEIVE].append({"account": transfer["to"], "amount": transfer["value"]})
+            events[EventName.SEND].append(
+                {"account": transfer["from"], "amount": transfer["value"]}
+            )
+            events[EventName.RECEIVE].append(
+                {"account": transfer["to"], "amount": transfer["value"]}
+            )
 
         return events
 
     @staticmethod
     def _apply_events(account: Account, events: list[dict]) -> None:
         handlers = {
-            MINT: lambda _account, _event: setattr(
+            EventName.MINT: lambda _account, _event: setattr(
                 _account, "sds_count", _account.sds_count + _event["amount"]
             ),
-            BURN: lambda _account, _event: setattr(
+            EventName.BURN: lambda _account, _event: setattr(
                 _account, "sds_count", _account.sds_count - _event["amount"]
             ),
-            SEND: lambda _account, _event: setattr(
+            EventName.SEND: lambda _account, _event: setattr(
                 _account, "snx_count", _account.snx_count - _event["amount"]
             ),
-            RECEIVE: lambda _account, _event: setattr(
+            EventName.RECEIVE: lambda _account, _event: setattr(
                 _account, "snx_count", _account.snx_count + _event["amount"]
             ),
-            FEES_CLAIMED: lambda _account, _event: (
+            EventName.FEES_CLAIMED: lambda _account, _event: (
                 setattr(_account, "snx_count", _account.snx_count + _event["snxRewards"]),
                 setattr(_account, "claimable_snx", 0),
             ),
-            FLAGGED_FOR_LIQUIDATION: lambda _account, _event: setattr(
+            EventName.FLAGGED_FOR_LIQUIDATION: lambda _account, _event: setattr(
                 _account,
                 "liquidation_deadline",
                 datetime.datetime.fromtimestamp(_event["deadline"]),
             ),
-            REMOVED_FROM_LIQUIDATION: lambda _account, _event: setattr(
+            EventName.REMOVED_FROM_LIQUIDATION: lambda _account, _event: setattr(
                 _account, "liquidation_deadline", None
             ),
         }

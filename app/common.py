@@ -5,6 +5,14 @@ class Chain(StrEnum):
     optimism = "optimism"
     ethereum = "ethereum"
 
+    @property
+    def chain_id(self) -> int:
+        return {
+            Chain.optimism: 10,
+            Chain.ethereum: 1
+        }[self]
+
+
     @classmethod
     def from_string(cls, value: str):
         """returns None if no match"""
@@ -25,3 +33,4 @@ class SNXData:
 
     snx_updated: bool = False
     sds_updated: bool = False
+    period_updated: bool = False
