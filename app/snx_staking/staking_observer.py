@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from eth_typing import Address
 
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class SynthetixUpdate:
     reinit: bool = False
     can_init_new_accounts: bool = False
-    events: dict | None = None
+    events: dict = field(default_factory=dict)
     current_block: int | None = None
 
 
@@ -49,6 +49,7 @@ class StakingObserver:
 
     async def _init(self):
         current_block = await self._synthetix.get_block_num()
+        await self._snx_data_manager.update()
         await self._account_manager.init_all_accounts(current_block)
 
         now = time.time()
@@ -104,3 +105,4 @@ class StakingObserver:
                 can_init_new_accounts=True,
                 current_block=current_block,
             )
+        return SynthetixUpdate()
