@@ -16,7 +16,7 @@ class UnitOfWork:
         self.accounts: AccountRepository = AccountRepository(self._session)
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:   # noqa: ANN001
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:  # noqa: ANN001
         await asyncio.sleep(0)
         try:
             if exc_val:

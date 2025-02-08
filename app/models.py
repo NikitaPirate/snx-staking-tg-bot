@@ -17,7 +17,7 @@ class UUIDModel(SQLModel, table=False):
         sa_column_kwargs={"server_default": text("gen_random_uuid()"), "unique": True},
     )
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.id)
 
 
