@@ -1,8 +1,8 @@
 import asyncio
 
 import aiohttp
-import web3
 from eth_typing import Address
+from tenacity import retry, stop_after_attempt, wait_exponential
 from web3 import AsyncWeb3
 from web3.contract import AsyncContract
 
@@ -15,7 +15,11 @@ from app.snx_staking.synthetix.utils import str_to_bytes32
 
 class ContractManager:
     def __init__(
-        self, chain: Chain, address_resolver_address: Address, etherscan_key: str
+        self,
+        chain: Chain,
+        web3: AsyncWeb3,
+        address_resolver_address: Address,
+        etherscan_key: str,
     ) -> None:
         self._chain: Chain = chain
         self._web3: AsyncWeb3 = web3
@@ -72,6 +76,10 @@ class ContractManager:
         ).call()
         return contract_address
 
+    @retry(
+        stop=stop_after_attempt(5),
+        wait=wait_exponential(multiplier=1, min=1, max=5),
+    )
     async def _get_contract_abi(self, contract_address: Address) -> str:
         url = "https://api.etherscan.io/v2/api"
         params = {
@@ -82,5 +90,10 @@ class ContractManager:
             "apikey": self._etherscan_key,
         }
         async with aiohttp.ClientSession() as session, session.get(url, params=params) as response:
+            if response.status != 200:
+                raise Exception(f"HTTP {response.status}: {await response.text()}")
             data = await response.json()
-        return data["result"]
+
+        if data.get("status") == "1":
+            return data["result"]
+        raise Exception(f"Etherscan error: {data}")
