@@ -1,11 +1,13 @@
 import asyncio
+from asyncio import Semaphore
 from typing import NamedTuple
 
 from eth_typing import AnyAddress
-from web3 import AsyncWeb3
+from web3 import AsyncHTTPProvider, AsyncWeb3
 from web3.types import BlockIdentifier
 
 from app.common import Chain
+from app.config import ChainConfig
 from app.snx_staking.synthetix.constants import ContractName, contract_to_events
 from app.snx_staking.synthetix.contract_caller import ContractCaller
 from app.snx_staking.synthetix.contract_manager import ContractManager
@@ -76,5 +78,17 @@ class Synthetix:
             contract = self._contract_manager.get_contract(contract_name)
             for event_name in event_names:
                 event = getattr(contract.events, event_name)
-                events[event_name] = await event.get_logs(fromBlock=from_block, toBlock=to_block)
+                events[event_name] = await event.get_logs(from_block=from_block, to_block=to_block)
         return events
+
+
+def bootstrap_synthetix(
+    chain_config: ChainConfig, etherscan_key: str, web3_calls_semaphore: Semaphore
+) -> Synthetix:
+    web3 = AsyncWeb3(AsyncHTTPProvider(chain_config.api))
+    contract_manager = ContractManager(
+        chain_config.chain, web3, chain_config.address_resolver_address, etherscan_key
+    )
+    contract_caller = ContractCaller(contract_manager, web3_calls_semaphore)
+    synthetix = Synthetix(chain_config.chain, web3, contract_manager, contract_caller)
+    return synthetix

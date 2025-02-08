@@ -1,4 +1,6 @@
+from dataclasses import dataclass
 from enum import StrEnum
+from typing import Self
 
 
 class Chain(StrEnum):
@@ -9,12 +11,18 @@ class Chain(StrEnum):
     def chain_id(self) -> int:
         return {
             Chain.optimism: 10,
-            Chain.ethereum: 1
+            Chain.ethereum: 1,
         }[self]
 
+    @property
+    def alchemy_name(self) -> str:
+        return {
+            Chain.optimism: "opt",
+            Chain.ethereum: "eth",
+        }[self]
 
     @classmethod
-    def from_string(cls, value: str):
+    def from_string(cls, value: str) -> Self:
         """returns None if no match"""
         value = value.lower()
         if value in ("e", "eth", "ethereum"):
@@ -23,6 +31,7 @@ class Chain(StrEnum):
             return cls.optimism
 
 
+@dataclass
 class SNXData:
     chain: Chain
 
