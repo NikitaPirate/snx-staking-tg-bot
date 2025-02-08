@@ -134,7 +134,9 @@ class GenericSqlRepositoryWithUUID(GenericSqlRepository[M]):
 class AccountRepository(GenericSqlRepositoryWithUUID[Account]):
     _model = Account
 
-    async def get_by_address_chain(self, address: Address | str, chain: Chain) -> Account | None:
+    async def get_by_address_chain_or_none(
+        self, address: Address | str, chain: Chain
+    ) -> Account | None:
         return await self.get_one_or_none(
             self._model.address == address, self._model.chain == chain
         )

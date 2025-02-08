@@ -45,7 +45,10 @@ class AccountManager:
     async def _init_account(self, address: Address, block_identifier: BlockIdentifier) -> None:
         account_data = await self._synthetix.load_address_data(address, block_identifier)
         async with self._uow_factory() as uow:
-            account = await uow.accounts.get_by_address_chain(address, self.chain)
+            if not (
+                account := await uow.accounts.get_by_address_chain_or_none(address, self.chain)
+            ):
+                return
 
             account.snx_count = Decimal(str(account_data.collateral))
             account.sds_count = Decimal(str(account_data.debt_share))
@@ -79,7 +82,10 @@ class AccountManager:
 
     async def _update_account(self, address: str, events: list) -> None:
         async with self._uow_factory() as uow:
-            account = await uow.accounts.get_by_address_chain(address, self.chain)
+            if not (
+                account := await uow.accounts.get_by_address_chain_or_none(address, self.chain)
+            ):
+                return
             self._apply_events(account, events)
 
             collateral_updated = self._snx_data.snx_updated or any(
