@@ -37,7 +37,7 @@ def bootstrap_chain(
     # Here temporary while no bot
     new_accounts_queue = Queue()
 
-    synthetix = bootstrap_synthetix(chain_config, etherscan_key, web3_calls_semaphore)
+    synthetix = bootstrap_synthetix(chain_config, etherscan_key)
 
     snx_data = SNXData(chain=chain_config.chain)
     snx_data_manager = SNXDataManager(synthetix, snx_data)

@@ -1,5 +1,4 @@
 import asyncio
-from asyncio import Semaphore
 from typing import NamedTuple
 
 from eth_typing import AnyAddress
@@ -11,6 +10,7 @@ from app.config import ChainConfig
 from app.snx_staking.synthetix.constants import ContractName, contract_to_events
 from app.snx_staking.synthetix.contract_caller import ContractCaller
 from app.snx_staking.synthetix.contract_manager import ContractManager
+from app.snx_staking.synthetix.utils import create_raw_contract_call
 
 
 class AddressData(NamedTuple):
@@ -82,13 +82,16 @@ class Synthetix:
         return events
 
 
-def bootstrap_synthetix(
-    chain_config: ChainConfig, etherscan_key: str, web3_calls_semaphore: Semaphore
-) -> Synthetix:
+def bootstrap_synthetix(chain_config: ChainConfig, etherscan_key: str) -> Synthetix:
     web3 = AsyncWeb3(AsyncHTTPProvider(chain_config.api))
+    raw_contract_call = create_raw_contract_call()
     contract_manager = ContractManager(
-        chain_config.chain, web3, chain_config.address_resolver_address, etherscan_key
+        chain_config.chain,
+        web3,
+        raw_contract_call,
+        chain_config.address_resolver_address,
+        etherscan_key,
     )
-    contract_caller = ContractCaller(contract_manager, web3_calls_semaphore)
+    contract_caller = ContractCaller(contract_manager, raw_contract_call)
     synthetix = Synthetix(chain_config.chain, web3, contract_manager, contract_caller)
     return synthetix

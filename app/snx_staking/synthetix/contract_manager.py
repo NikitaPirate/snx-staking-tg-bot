@@ -10,7 +10,7 @@ from app.common import Chain
 from app.snx_staking.synthetix.addres_resolver_abi import address_resolver_abi
 from app.snx_staking.synthetix.constants import contract_names
 from app.snx_staking.synthetix.proxy_abi import proxy_abi
-from app.snx_staking.synthetix.utils import str_to_bytes32
+from app.snx_staking.synthetix.utils import RawContractCall, str_to_bytes32
 
 
 class ContractManager:
@@ -18,11 +18,13 @@ class ContractManager:
         self,
         chain: Chain,
         web3: AsyncWeb3,
+        raw_contract_call: RawContractCall,
         address_resolver_address: Address,
         etherscan_key: str,
     ) -> None:
         self._chain: Chain = chain
         self._web3: AsyncWeb3 = web3
+        self._raw_contract_call: RawContractCall = raw_contract_call
         self._address_resolver_contract: AsyncContract = self._web3.eth.contract(
             address=address_resolver_address, abi=address_resolver_abi
         )
@@ -63,7 +65,7 @@ class ContractManager:
 
         if contract_name.startswith("Proxy"):
             proxy_contract = self._web3.eth.contract(address=contract_address, abi=proxy_abi)
-            contract_address = await proxy_contract.functions.target().call()
+            contract_address = await self._raw_contract_call(proxy_contract, "target", "latest")
         abi = await self._get_contract_abi(contract_address)
         contract = self._web3.eth.contract(address=contract_address, abi=abi)
 
@@ -71,9 +73,9 @@ class ContractManager:
 
     async def _fetch_contract_address(self, contract_name: str) -> Address:
         contract_name_bytes: bytes = str_to_bytes32(contract_name)
-        contract_address: Address = await self._address_resolver_contract.functions.getAddress(
-            contract_name_bytes
-        ).call()
+        contract_address: Address = await self._raw_contract_call(
+            self._address_resolver_contract, "getAddress", "latest", contract_name_bytes
+        )
         return contract_address
 
     @retry(
