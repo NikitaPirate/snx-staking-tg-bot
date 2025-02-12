@@ -4,7 +4,7 @@ from enum import StrEnum
 from typing import TypedDict
 
 from pydantic import condecimal
-from sqlalchemy import BigInteger, PrimaryKeyConstraint, text
+from sqlalchemy import JSON, BigInteger, Column, text
 from sqlmodel import Field, Relationship, SQLModel
 
 from app.common import Chain
@@ -44,18 +44,9 @@ class Account(UUIDModel, table=True):
     )
     liquidation_deadline: datetime.datetime | None = Field(default=None)
 
-    chat_links: list["ChatAccountLink"] = Relationship(
+    chat_accounts: list["ChatAccount"] = Relationship(
         back_populates="account",
         sa_relationship_kwargs={"lazy": "selectin", "cascade": "all, delete-orphan"},
-    )
-
-    notifs: list["Notif"] = Relationship(
-        back_populates="account",
-        sa_relationship_kwargs={
-            "lazy": "selectin",
-            "cascade": "all, delete-orphan",
-            "passive_deletes": True,
-        },
     )
 
 
@@ -78,30 +69,27 @@ DEFAULT_CHAT_ACCOUNT_SETTINGS: ChatAccountSettings = {
 }
 
 
-class ChatAccountLink(SQLModel, table=True):
-    __table_args__ = (
-        PrimaryKeyConstraint(
-            "chat_id",
-            "account_id",
-            name="pk_chat_account_link",  # явное имя PK
-        ),
-    )
-
-    chat_id: int | None = Field(default=None, foreign_key="chat.id")
-    account_id: uuid.UUID | None = Field(default=None, foreign_key="account.id")
+class ChatAccount(UUIDModel, table=True):
+    chat_id: int = Field(foreign_key="chat.id", ondelete="CASCADE")
+    account_id: uuid.UUID = Field(foreign_key="account.id", ondelete="CASCADE")
     account_settings: ChatAccountSettings = Field(
-        default_factory=lambda: DEFAULT_CHAT_ACCOUNT_SETTINGS.copy()
+        sa_column=Column(JSON), default_factory=lambda: DEFAULT_CHAT_ACCOUNT_SETTINGS.copy()
     )
 
-    chat: "Chat" = Relationship(back_populates="account_links")
-    account: "Account" = Relationship(back_populates="chat_links")
+    chat: "Chat" = Relationship(back_populates="chat_accounts", cascade_delete=True)
+    account: "Account" = Relationship(back_populates="chat_accounts", cascade_delete=True)
+
+    notifs: list["Notif"] = Relationship(
+        back_populates="chat_account",
+        sa_relationship_kwargs={
+            "lazy": "selectin",
+            "cascade": "all, delete-orphan",
+        },
+    )
 
     def update_settings(self, **kwargs: bool) -> None:
         # noinspection PyTypeChecker
         self.account_settings = {**self.account_settings, **kwargs}
-
-    def __hash__(self) -> int:
-        return hash(f"{self.chat_id}-{self.account_id}")
 
 
 class Chat(SQLModel, table=True):
@@ -110,7 +98,7 @@ class Chat(SQLModel, table=True):
     sent_notif_message_id: int = Field()
     sent_notif_message_text: str = Field()
 
-    account_links: list["ChatAccountLink"] = Relationship(
+    chat_accounts: list["ChatAccount"] = Relationship(
         back_populates="chat",
         sa_relationship_kwargs={
             "lazy": "selectin",
@@ -118,13 +106,9 @@ class Chat(SQLModel, table=True):
         },
     )
 
-    notifs: list["Notif"] = Relationship(
-        back_populates="chat",
-        sa_relationship_kwargs={
-            "lazy": "selectin",
-            "cascade": "all, delete-orphan",
-        },
-    )
+    @property
+    def accounts(self) -> list[Account]:
+        return [chat_account.account for chat_account in self.chat_accounts]
 
 
 # NOTIF
@@ -144,16 +128,12 @@ class NotifParams(TypedDict):
 
 class Notif(UUIDModel, table=True):
     type: NotifType = Field()
-    params: NotifParams = Field(default={})
+    params: NotifParams = Field(sa_column=Column(JSON), default={})
     enabled: bool = Field(default=True)
     onetime: bool = Field(default=False)
-    account_id: uuid.UUID = Field(
-        foreign_key="account.id", sa_column_kwargs={"ondelete": "CASCADE"}
-    )
-    chat_id: int | None = Field(foreign_key="chat.id", sa_column_kwargs={"ondelete": "CASCADE"})
 
-    account: Account = Relationship(back_populates="notifs")
-    chat: Chat = Relationship(back_populates="notifs")
+    chat_account_id: uuid.UUID = Field(foreign_key="chataccount.id", ondelete="CASCADE")
+    chat_account: "ChatAccount" = Relationship(back_populates="notifs", cascade_delete=True)
 
     def update_params(self, **kwargs: bool) -> None:
         # noinspection PyTypeChecker
