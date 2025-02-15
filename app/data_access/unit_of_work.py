@@ -4,7 +4,7 @@ from typing import Self
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.data_access.repositories import AccountRepository
+from app.data_access.repositories import AccountRepository, ChatRepository, ChatAccountRepository, NotifRepository
 
 
 class UnitOfWork:
@@ -14,6 +14,9 @@ class UnitOfWork:
     async def __aenter__(self) -> Self:
         self._session: AsyncSession = self._session_factory()
         self.accounts: AccountRepository = AccountRepository(self._session)
+        self.chats: ChatRepository = ChatRepository(self._session)
+        self.chat_accounts: ChatAccountRepository = ChatAccountRepository(self._session)
+        self.notifs: NotifRepository = NotifRepository(self._session)
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:  # noqa: ANN001
