@@ -10,7 +10,6 @@ from app.common import Chain
 from app.data_access import UnitOfWork, UOWFactoryType
 from app.models import Account, Chat, ChatAccount, Notif, NotifType
 
-SELECTED_CHAT_ACCOUNT_ID = "selected_account"
 T = TypeVar("T")
 
 
@@ -91,7 +90,7 @@ class SnxBotContext(CallbackContext[ExtBot, dict, ChatData, dict]):
 
     @with_uow
     async def delete_current_chat_account(self, uow: UnitOfWork):
-        await uow.chat_accounts.delete_by_id(self.chat_data.pop(SELECTED_CHAT_ACCOUNT_ID))
+        await uow.chat_accounts.delete_by_id(self.chat_data.pop("selected_chat_account"))
 
     @with_uow
     async def toggle_current_chat_account_setting(self, setting_name: str, *, uow: UnitOfWork):
