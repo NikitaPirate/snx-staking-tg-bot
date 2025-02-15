@@ -1,10 +1,11 @@
 import datetime
 import uuid
 from enum import StrEnum
-from typing import TypedDict
+from typing import TypedDict, Optional
 
 from pydantic import condecimal
-from sqlalchemy import JSON, BigInteger, Column, text
+from sqlalchemy import BigInteger, Column, text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field, Relationship, SQLModel
 
 from app.common import Chain
@@ -43,10 +44,10 @@ class Account(UUIDModel, table=True):
         default=0, sa_column_kwargs={"server_default": "0"}
     )
     liquidation_deadline: datetime.datetime | None = Field(default=None)
-
+    inited: bool = Field(default=False, sa_column_kwargs={"server_default": "false"})
     chat_accounts: list["ChatAccount"] = Relationship(
         back_populates="account",
-        sa_relationship_kwargs={"lazy": "selectin", "cascade": "all, delete-orphan"},
+        sa_relationship_kwargs={"lazy": "select", "cascade": "all, delete-orphan"},
     )
 
 
@@ -73,12 +74,21 @@ class ChatAccount(UUIDModel, table=True):
     chat_id: int = Field(foreign_key="chat.id", ondelete="CASCADE")
     account_id: uuid.UUID = Field(foreign_key="account.id", ondelete="CASCADE")
     account_settings: ChatAccountSettings = Field(
-        sa_column=Column(JSON), default_factory=lambda: DEFAULT_CHAT_ACCOUNT_SETTINGS.copy()
+        sa_column=Column(JSONB), default_factory=lambda: DEFAULT_CHAT_ACCOUNT_SETTINGS.copy()
     )
 
-    chat: "Chat" = Relationship(back_populates="chat_accounts", cascade_delete=True)
-    account: "Account" = Relationship(back_populates="chat_accounts", cascade_delete=True)
-
+    chat: "Chat" = Relationship(
+        back_populates="chat_accounts",
+        sa_relationship_kwargs={
+            "lazy": "selectin",
+        }
+    )
+    account: "Account" = Relationship(
+        back_populates="chat_accounts",
+        sa_relationship_kwargs={
+            "lazy": "selectin",
+        }
+    )
     notifs: list["Notif"] = Relationship(
         back_populates="chat_account",
         sa_relationship_kwargs={
@@ -94,9 +104,9 @@ class ChatAccount(UUIDModel, table=True):
 
 class Chat(SQLModel, table=True):
     id: int = Field(primary_key=True, index=True, nullable=False, sa_type=BigInteger)
-    dashboard_message_id: int = Field()
-    sent_notif_message_id: int = Field()
-    sent_notif_message_text: str = Field()
+    dashboard_message_id: Optional[int] = Field()
+    sent_notif_message_id: Optional[int] = Field()
+    sent_notif_message_text: Optional[str] = Field()
 
     chat_accounts: list["ChatAccount"] = Relationship(
         back_populates="chat",
@@ -128,12 +138,14 @@ class NotifParams(TypedDict):
 
 class Notif(UUIDModel, table=True):
     type: NotifType = Field()
-    params: NotifParams = Field(sa_column=Column(JSON), default={})
+    params: NotifParams = Field(sa_column=Column(JSONB), default={})
     enabled: bool = Field(default=True)
     onetime: bool = Field(default=False)
 
     chat_account_id: uuid.UUID = Field(foreign_key="chataccount.id", ondelete="CASCADE")
-    chat_account: "ChatAccount" = Relationship(back_populates="notifs", cascade_delete=True)
+    chat_account: "ChatAccount" = Relationship(back_populates="notifs", sa_relationship_kwargs={
+            "cascade": "all",
+        })
 
     def update_params(self, **kwargs: bool) -> None:
         # noinspection PyTypeChecker
