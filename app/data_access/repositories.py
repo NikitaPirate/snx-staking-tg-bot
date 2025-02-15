@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import SQLModel
 
 from app.common import Chain
-from app.models import Account
+from app.models import Account, Chat, ChatAccount, Notif
 
 M = TypeVar("M", bound=SQLModel)
 # For PyCharm doesn't complain about type mismatches
@@ -119,7 +119,7 @@ class GenericSqlRepository[M]:
 
 
 class GenericSqlRepositoryWithUUID(GenericSqlRepository[M]):
-    async def get_by_id(self, id_: uuid.UUID) -> M:
+    async def get_by_id_or_none(self, id_: uuid.UUID) -> M:
         return await self.get_one_or_none(self._model.id == id_)
 
     async def get_all_by_ids(self, ids: Sequence[uuid.UUID]) -> Sequence[M]:
@@ -129,6 +129,11 @@ class GenericSqlRepositoryWithUUID(GenericSqlRepository[M]):
         query = self._assemble_query(*criteria).with_only_columns(self._model.id)
         res = await self._session.execute(query)
         return [row[0] for row in res.all()]
+
+    async def delete_by_id(self, id_: uuid.UUID):
+        record = await self.get_by_id_or_none(id_)
+        if record:
+            await self.delete(record)
 
 
 class AccountRepository(GenericSqlRepositoryWithUUID[Account]):
@@ -146,3 +151,15 @@ class AccountRepository(GenericSqlRepositoryWithUUID[Account]):
         query = select(self._model.address).where(self._model.chain == chain).distinct()
         result = await self._session.execute(query)
         return [row[0] for row in result.all()]
+
+
+class ChatRepository(GenericSqlRepository[Chat]):
+    _model = Chat
+
+
+class ChatAccountRepository(GenericSqlRepositoryWithUUID[ChatAccount]):
+    _model = ChatAccount
+
+
+class NotifRepository(GenericSqlRepositoryWithUUID[Notif]):
+    _model = Notif
