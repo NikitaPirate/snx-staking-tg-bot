@@ -106,3 +106,8 @@ class StakingObserver:
                 current_block=current_block,
             )
         return SynthetixUpdate()
+
+
+async def update_all_observers(observers: dict[Chain, StakingObserver]):
+    await asyncio.gather(*[observer.update() for observer in observers.values()], return_exceptions=True)
+
