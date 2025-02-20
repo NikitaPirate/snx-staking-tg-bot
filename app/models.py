@@ -1,7 +1,7 @@
 import datetime
 import uuid
 from enum import StrEnum
-from typing import TypedDict, Optional
+from typing import TypedDict
 
 from pydantic import condecimal
 from sqlalchemy import BigInteger, Column, text
@@ -47,7 +47,7 @@ class Account(UUIDModel, table=True):
     inited: bool = Field(default=False, sa_column_kwargs={"server_default": "false"})
     chat_accounts: list["ChatAccount"] = Relationship(
         back_populates="account",
-        sa_relationship_kwargs={"lazy": "select", "cascade": "all, delete-orphan"},
+        sa_relationship_kwargs={"lazy": "selectin", "cascade": "all, delete-orphan"},
     )
 
 
@@ -81,13 +81,13 @@ class ChatAccount(UUIDModel, table=True):
         back_populates="chat_accounts",
         sa_relationship_kwargs={
             "lazy": "selectin",
-        }
+        },
     )
     account: "Account" = Relationship(
         back_populates="chat_accounts",
         sa_relationship_kwargs={
             "lazy": "selectin",
-        }
+        },
     )
     notifs: list["Notif"] = Relationship(
         back_populates="chat_account",
@@ -104,9 +104,9 @@ class ChatAccount(UUIDModel, table=True):
 
 class Chat(SQLModel, table=True):
     id: int = Field(primary_key=True, index=True, nullable=False, sa_type=BigInteger)
-    dashboard_message_id: Optional[int] = Field()
-    sent_notif_message_id: Optional[int] = Field()
-    sent_notif_message_text: Optional[str] = Field()
+    dashboard_message_id: int | None = Field()
+    sent_notif_message_id: int | None = Field()
+    sent_notif_message_text: str | None = Field()
 
     chat_accounts: list["ChatAccount"] = Relationship(
         back_populates="chat",
@@ -140,12 +140,23 @@ class Notif(UUIDModel, table=True):
     type: NotifType = Field()
     params: NotifParams = Field(sa_column=Column(JSONB), default={})
     enabled: bool = Field(default=True)
-    onetime: bool = Field(default=False)
 
     chat_account_id: uuid.UUID = Field(foreign_key="chataccount.id", ondelete="CASCADE")
-    chat_account: "ChatAccount" = Relationship(back_populates="notifs", sa_relationship_kwargs={
+    chat_account: "ChatAccount" = Relationship(
+        back_populates="notifs",
+        sa_relationship_kwargs={
             "cascade": "all",
-        })
+            "lazy": "selectin",
+        },
+    )
+
+    @property
+    def chat(self) -> "Chat":
+        return self.chat_account.chat
+
+    @property
+    def account(self) -> "Account":
+        return self.chat_account.account
 
     def update_params(self, **kwargs: bool) -> None:
         # noinspection PyTypeChecker
