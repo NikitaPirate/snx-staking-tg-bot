@@ -1,5 +1,7 @@
 import asyncio
 import datetime
+import logging
+import time
 from collections import defaultdict
 from decimal import Decimal
 
@@ -10,6 +12,8 @@ from app.common import Chain, SNXData
 from app.data_access import UOWFactoryType
 from app.models import Account
 from app.snx_staking.synthetix import EventName, Synthetix
+
+logger = logging.getLogger(__name__)
 
 
 class AccountManager:
@@ -29,12 +33,15 @@ class AccountManager:
     async def init_accounts(
         self, addresses: list[Address], block_identifier: BlockIdentifier
     ) -> None:
+        start = time.time()
         await asyncio.gather(
             *[
                 asyncio.create_task(self._init_account(address, block_identifier))
                 for address in addresses
-            ]
+            ],
+            return_exceptions=True,
         )
+        logger.info(f"{self.chain.value} init in {time.time() - start}")
 
     async def init_all_accounts(self, block_identifier: BlockIdentifier) -> None:
         async with self._uow_factory() as uow:
