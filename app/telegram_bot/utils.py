@@ -35,7 +35,7 @@ def render_accounts_buttons(chat_accounts: list[ChatAccount]) -> list[list[Inlin
         account_button = [
             InlineKeyboardButton(
                 text=f"{account.address[:6]}... {account.chain}",
-                callback_data=str(account.id),
+                callback_data=str(chat_account.id),
             )
         ]
         buttons.append(account_button)

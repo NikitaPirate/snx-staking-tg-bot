@@ -4,7 +4,12 @@ from typing import Self
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.data_access.repositories import AccountRepository, ChatRepository, ChatAccountRepository, NotifRepository
+from app.data_access.repositories import (
+    AccountRepository,
+    ChatAccountRepository,
+    ChatRepository,
+    NotifRepository,
+)
 
 
 class UnitOfWork:
