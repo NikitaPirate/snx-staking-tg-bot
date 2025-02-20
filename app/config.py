@@ -4,7 +4,9 @@ from app.common import Chain
 
 
 class ChainConfig:
-    def __init__(self, chain: Chain, api: str, address_resolver_address: str, issuance_ratio: float):
+    def __init__(
+        self, chain: Chain, api: str, address_resolver_address: str, issuance_ratio: float
+    ):
         self.chain = chain
         self.api = api
         self.address_resolver_address: str = address_resolver_address
@@ -31,5 +33,5 @@ class Config(BaseSettings, extra="allow"):
                 chain=chain,
                 api=f"https://{chain.alchemy_name}-mainnet.g.alchemy.com/v2/{self.alchemy_key}",
                 address_resolver_address=getattr(self, f"{chain.value}_address_resolver_address"),
-                issuance_ratio=getattr(self, f"{chain.value}_issuance_ratio")
+                issuance_ratio=getattr(self, f"{chain.value}_issuance_ratio"),
             )

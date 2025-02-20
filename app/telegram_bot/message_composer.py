@@ -6,6 +6,7 @@ from app.common import SNXMultiChainData
 from app.models import ChatAccount, Notif, NotifType
 from app.telegram_bot import texts, utils
 from app.telegram_bot.constants import NOTIF_TYPE_NAMES, Callbacks
+from app.telegram_bot.utils import remaining_time_until
 
 
 def start() -> str:
@@ -234,5 +235,8 @@ def info() -> str:
 
 
 def payday(snx_data: SNXMultiChainData) -> str:
-    text = snx_data.format_period_end_times()
+    text = ""
+    for chain, period_end in snx_data.period_end_times():
+        remaining_time = remaining_time_until(period_end)
+        text += f"{chain}: {remaining_time}\n"
     return text

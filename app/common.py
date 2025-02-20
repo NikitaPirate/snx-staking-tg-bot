@@ -36,7 +36,7 @@ class Chain(StrEnum):
 @dataclass
 class SNXData:
     chain: Chain
-    issuance_ratio: int
+    issuance_ratio: float
 
     snx_price: int = 0
     sds_price: int = 0
@@ -51,20 +51,20 @@ class SNXData:
 class SNXMultiChainData:
     def __init__(self, chain_config: ChainConfig):
         self._data: dict[Chain, SNXData] = {
-            Chain.ethereum: SNXData(chain=Chain.ethereum, issuance_ratio=chain_config.issuance_ratio),
-            Chain.optimism: SNXData(chain=Chain.optimism, issuance_ratio=chain_config.issuance_ratio),
+            Chain.ethereum: SNXData(
+                chain=Chain.ethereum, issuance_ratio=chain_config.issuance_ratio
+            ),
+            Chain.optimism: SNXData(
+                chain=Chain.optimism, issuance_ratio=chain_config.issuance_ratio
+            ),
         }
 
     def __getitem__(self, chain: Chain) -> SNXData:
         return self._data[chain]
 
     # Texts for bot
-    def format_period_end_times(self) -> str:
-        text = ""
-        for chain, data in self._data.items():
-            remaining_time = remaining_time_until(data.period_end)
-            text += f"{chain}: {remaining_time}\n"
-        return text
+    def period_end_times(self) -> dict[str, int]:
+        return {chain: data.period_end for chain, data in self._data.items()}
 
     def format_snx_price(self) -> str:
         snx_prices = [data.snx_price for data in self._data.values() if data.snx_price != 0]
