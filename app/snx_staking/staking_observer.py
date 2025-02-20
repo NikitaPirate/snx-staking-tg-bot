@@ -3,7 +3,7 @@ import logging
 import time
 from dataclasses import dataclass, field
 
-from eth_typing import Address
+from eth_typing import AnyAddress
 
 from app.common import Chain
 from app.snx_staking.account_manager import AccountManager
@@ -32,7 +32,7 @@ class StakingObserver:
         synthetix: Synthetix,
         snx_data_manager: SNXDataManager,
         account_manager: AccountManager,
-        new_accounts_queue: asyncio.Queue[Address],
+        new_accounts_queue: asyncio.Queue[AnyAddress],
         contracts_check_interval: int = 60 * 60 * 24,
         events_check_interval: int = 60 * 10,
     ):
@@ -40,7 +40,7 @@ class StakingObserver:
         self._synthetix: Synthetix = synthetix
         self._snx_data_manager: SNXDataManager = snx_data_manager
         self._account_manager = account_manager
-        self._new_accounts_queue: asyncio.Queue[Address] = new_accounts_queue
+        self._new_accounts_queue: asyncio.Queue[AnyAddress] = new_accounts_queue
 
         self._contract_check_interval: int = contracts_check_interval
         self._events_check_interval: int = events_check_interval

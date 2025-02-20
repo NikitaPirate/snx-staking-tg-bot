@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import Callable
 from functools import wraps
 from typing import NotRequired, TypedDict, TypeVar
@@ -35,6 +36,7 @@ class ChatData(TypedDict):
 class BotData(TypedDict):
     snx_data: SNXMultiChainData
     uow_factory: UOWFactoryType
+    new_accounts_queues: dict[Chain, asyncio.Queue[AnyAddress]]
 
 
 class SnxBotContext(CallbackContext[ExtBot, dict, ChatData, BotData]):
@@ -89,6 +91,7 @@ class SnxBotContext(CallbackContext[ExtBot, dict, ChatData, BotData]):
         if not (account := await uow.accounts.get_by_address_chain_or_none(address, chain)):
             account = Account(address=address, chain=chain)
             account = await uow.accounts.add(account)
+            await self.bot_data["new_accounts_queues"][chain].put(address)
         if not (
             chat_account := await uow.chat_accounts.is_exist(
                 ChatAccount.chat_id == self._chat_id, ChatAccount.account_id == account.id
