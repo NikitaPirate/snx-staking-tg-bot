@@ -7,6 +7,7 @@ from telegram.ext import ConversationHandler
 from app.models import NotifType
 from app.telegram_bot import message_composer, utils
 from app.telegram_bot.constants import States
+from app.telegram_bot.dashboard import compose_dashboard_message
 from app.telegram_bot.snx_bot_context import SnxBotContext
 
 
@@ -35,7 +36,7 @@ async def stop(update: Update, _: SnxBotContext) -> int:
 async def dashboard(update: Update, context: SnxBotContext) -> int:
     message_delivery: Callable = _get_message_delivery(update)
     chat = await context.get_chat()
-    text = message_composer.dashboard(chat)
+    text = compose_dashboard_message(chat, context.snx_data)
     res: Message = await message_delivery(text=text)
 
     async with context.uow_factory():

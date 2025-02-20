@@ -2,11 +2,10 @@ from uuid import UUID
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
-from app.common import Chain, SNXData
-from app.models import Chat, ChatAccount, Notif, NotifType
+from app.common import SNXMultiChainData
+from app.models import ChatAccount, Notif, NotifType
 from app.telegram_bot import texts, utils
 from app.telegram_bot.constants import NOTIF_TYPE_NAMES, Callbacks
-from app.telegram_bot.utils import remaining_time_until
 
 
 def start() -> str:
@@ -24,45 +23,6 @@ Tutorial: https://medium.com/@nikita-k/telegram-bot-update-fd56d2931574
 
 def user_not_exist(received_command: str) -> str:
     text = f"To use {received_command} please first send /start."
-    return text
-
-
-def dashboard(chat: Chat, snx_data: dict[Chain, SNXData]) -> str:
-    snx_prices = [
-        _snx_data.snx_price for _snx_data in snx_data.values() if _snx_data.snx_price != 0
-    ]
-    if not snx_prices:
-        snx_price = "loading"
-    else:
-        snx_price = sum(snx_prices) / len(snx_prices)
-        snx_price = round(snx_price / 10**18, 2)
-    text = f"SNX Price: ${snx_price} \n\n"
-    for link in chat.chat_accounts:
-        account = link.account
-        settings = link.account_settings
-        if not account.inited:
-            text += "Not initialized yet.\n\n"
-            continue
-        if settings["address"]:
-            text += f"{account.address[:6]}... {account.chain}\n"
-        if settings["c_ratio"]:
-            text += f"C-ratio: {round(account.c_ratio * 100, 1)}%\n"
-        if settings["collateral"]:
-            snx_count = round(account.snx_count / 10**18, 2)
-            collateral = round(account.collateral / 10**36, 2)
-            text += f"Collateral: {snx_count} SNX = ${collateral}\n"
-        if settings["debt"]:
-            text += f"Debt: {round(account.debt / 10 ** 18, 2)} sUSD\n"
-        if settings["claimable_snx"]:
-            text += f"Claimable SNX: {round(account.claimable_snx / 10 ** 18, 2)}\n"
-        if settings["liquidation_deadline"]:
-            if not account.liquidation_deadline:
-                liquidation_text = "Not flagged for liquidation"
-            else:
-                liquidation_text = f"Liquidation deadline: {
-                account.liquidation_deadline.strftime('%Y-%m-%d %H:%M:%S')}"
-            text += liquidation_text + "\n"
-        text += "\n"
     return text
 
 
@@ -273,9 +233,6 @@ def info() -> str:
     return text.replace(".", "\\.").replace("-", "\\-").replace("(", "\\(").replace(")", "\\)")
 
 
-def payday(snx_data: dict[Chain, SNXData]) -> str:
-    text = ""
-    for chain, data in snx_data.items():
-        remaining_time = remaining_time_until(data.period_end)
-        text += f"{chain}: {remaining_time}\n"
+def payday(snx_data: SNXMultiChainData) -> str:
+    text = snx_data.format_period_end_times()
     return text

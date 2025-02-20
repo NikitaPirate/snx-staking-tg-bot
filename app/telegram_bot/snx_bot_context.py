@@ -6,7 +6,7 @@ from uuid import UUID
 from eth_typing import AnyAddress
 from telegram.ext import Application, CallbackContext, ExtBot
 
-from app.common import Chain
+from app.common import Chain, SNXMultiChainData
 from app.data_access import UnitOfWork, UOWFactoryType
 from app.models import Account, Chat, ChatAccount, Notif, NotifType
 
@@ -32,8 +32,14 @@ class ChatData(TypedDict):
     notif_type: NotRequired[NotifType]
 
 
-class SnxBotContext(CallbackContext[ExtBot, dict, ChatData, dict]):
+class BotData(TypedDict):
+    snx_data: SNXMultiChainData
+    uow_factory: UOWFactoryType
+
+
+class SnxBotContext(CallbackContext[ExtBot, dict, ChatData, BotData]):
     chat_data: ChatData
+    bot_data: BotData
 
     def __init__(
         self,
@@ -46,6 +52,10 @@ class SnxBotContext(CallbackContext[ExtBot, dict, ChatData, dict]):
     @property
     def uow_factory(self) -> UOWFactoryType:
         return self.bot_data["uow_factory"]
+
+    @property
+    def snx_data(self) -> SNXMultiChainData:
+        return self.bot_data["snx_data"]
 
     @with_uow
     async def get_chat(self, *, uow: UnitOfWork) -> Chat:
@@ -122,14 +132,3 @@ class SnxBotContext(CallbackContext[ExtBot, dict, ChatData, dict]):
     @with_uow
     async def delete_notif_by_id(self, notif_id: UUID, *, uow: UnitOfWork):
         await uow.notifs.delete_by_id(notif_id)
-
-
-def create_snx_context(
-    uow_factory: UOWFactoryType,
-    application: Application,
-    chat_id: int | None = None,
-    user_id: int | None = None,
-) -> SnxBotContext:
-    return SnxBotContext(
-        application=application, uow_factory=uow_factory, chat_id=chat_id, user_id=user_id
-    )
