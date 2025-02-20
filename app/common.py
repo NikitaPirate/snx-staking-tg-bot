@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Self
 
-from app.telegram_bot.utils import remaining_time_until
+from app.config import ChainConfig
 
 
 class Chain(StrEnum):
@@ -49,10 +49,10 @@ class SNXData:
 
 
 class SNXMultiChainData:
-    def __init__(self):
+    def __init__(self, chain_config: ChainConfig):
         self._data: dict[Chain, SNXData] = {
-            Chain.ethereum: SNXData(chain=Chain.ethereum),
-            Chain.optimism: SNXData(chain=Chain.optimism),
+            Chain.ethereum: SNXData(chain=Chain.ethereum, issuance_ratio=chain_config.issuance_ratio),
+            Chain.optimism: SNXData(chain=Chain.optimism, issuance_ratio=chain_config.issuance_ratio),
         }
 
     def __getitem__(self, chain: Chain) -> SNXData:
