@@ -48,12 +48,15 @@ class ContractManager:
                 return True
             return False
 
-        checks = await asyncio.gather(*[is_contract_updated(name) for name in contract_names])
+        checks = await asyncio.gather(
+            *[is_contract_updated(name) for name in contract_names], return_exceptions=True
+        )
         return any(checks)
 
     async def install_contracts(self) -> None:
         await asyncio.gather(
-            *[self._install_contract(contract_name) for contract_name in contract_names]
+            *[self._install_contract(contract_name) for contract_name in contract_names],
+            return_exceptions=True,
         )
 
     async def _install_contract(

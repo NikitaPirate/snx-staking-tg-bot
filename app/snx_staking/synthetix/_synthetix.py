@@ -5,8 +5,7 @@ from eth_typing import AnyAddress
 from web3 import AsyncHTTPProvider, AsyncWeb3
 from web3.types import BlockIdentifier
 
-from app.common import Chain
-from app.config import ChainConfig
+from app.common import Chain, ChainConfig
 from app.snx_staking.synthetix.constants import ContractName, contract_to_events
 from app.snx_staking.synthetix.contract_caller import ContractCaller
 from app.snx_staking.synthetix.contract_manager import ContractManager
@@ -52,7 +51,7 @@ class Synthetix:
     async def get_synthetix_prices(self) -> tuple:
         t_snx_price = asyncio.create_task(self._contract_caller.synthetix_price())
         t_sds_price = asyncio.create_task(self._contract_caller.debt_share_price())
-        return await asyncio.gather(t_snx_price, t_sds_price)
+        return await asyncio.gather(t_snx_price, t_sds_price, return_exceptions=True)
 
     async def get_period_data(self) -> tuple:
         return await self._contract_caller.recent_fee_periods()
@@ -68,6 +67,7 @@ class Synthetix:
                 self._contract_caller.liquidation_deadline_for_account(
                     address, block_identifier=block_identifier
                 ),
+                return_exceptions=True,
             )
         )
 

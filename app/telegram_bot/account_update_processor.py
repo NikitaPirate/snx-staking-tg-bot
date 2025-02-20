@@ -104,7 +104,9 @@ class AccountUpdateProcessor:
     # DASHBOARD
     async def _update_dashboard(self, account: Account):
         for chat_account in account.chat_accounts:
-            await update_dashboard_message(self._bot, chat_account.chat, self._snx_data)
+            await update_dashboard_message(
+                self._bot, chat_account.chat_id, self._uow_factory, self._snx_data
+            )
 
     # WORKER
     async def worker(self):
@@ -120,5 +122,7 @@ class AccountUpdateProcessor:
                     self._process_account_notifs(account),
                     return_exceptions=True,
                 )
+            except asyncio.CancelledError:
+                pass
             except Exception as e:
                 logger.error("Unexpected exception in worker", exc_info=e)

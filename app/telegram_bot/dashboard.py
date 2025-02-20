@@ -4,6 +4,7 @@ from telegram import Bot
 from telegram.error import BadRequest
 
 from app.common import SNXMultiChainData
+from app.data_access import UOWFactoryType
 from app.models import Chat
 
 logger = logging.getLogger(__name__)
@@ -34,7 +35,7 @@ def compose_dashboard_message(chat: Chat, snx_data: SNXMultiChainData) -> str:
                 liquidation_text = "Not flagged for liquidation"
             else:
                 liquidation_text = f"Liquidation deadline: {
-                account.liquidation_deadline.strftime('%Y-%m-%d %H:%M:%S')}"
+                    account.liquidation_deadline.strftime('%Y-%m-%d %H:%M:%S')}"
             text += liquidation_text + "\n"
         text += "\n"
     return text
@@ -42,9 +43,12 @@ def compose_dashboard_message(chat: Chat, snx_data: SNXMultiChainData) -> str:
 
 async def update_dashboard_message(
     bot: Bot,
-    chat: Chat,
+    chat_id: int,
+    uow_factory: UOWFactoryType,
     snx_data: SNXMultiChainData,
 ) -> None:
+    async with uow_factory() as uow:
+        chat = await uow.chats.get_one_or_none(Chat.id == chat_id)
     text = compose_dashboard_message(chat, snx_data)
     try:
         await bot.edit_message_text(text, chat.id, chat.dashboard_message_id)

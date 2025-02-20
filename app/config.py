@@ -1,22 +1,14 @@
 from pydantic_settings import BaseSettings
 
-from app.common import Chain
-
-
-class ChainConfig:
-    def __init__(
-        self, chain: Chain, api: str, address_resolver_address: str, issuance_ratio: float
-    ):
-        self.chain = chain
-        self.api = api
-        self.address_resolver_address: str = address_resolver_address
-        self.issuance_ratio: float = issuance_ratio
+from app.common import Chain, ChainConfig
 
 
 class Config(BaseSettings, extra="allow"):
     etherscan_key: str
     db_connection: str
     alchemy_key: str
+
+    telegram_token: str
 
     ethereum_address_resolver_address: str
     optimism_address_resolver_address: str

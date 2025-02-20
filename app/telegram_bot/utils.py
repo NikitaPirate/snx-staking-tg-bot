@@ -1,8 +1,10 @@
+import asyncio
 import datetime
 
 from eth_typing import AnyAddress
 from eth_utils import is_address, to_checksum_address
 from telegram import InlineKeyboardButton
+from telegram.ext import CallbackContext
 
 from app.common import Chain
 from app.models import ChatAccount, NotifParams, NotifType
@@ -62,3 +64,14 @@ def remaining_time_until(timestamp: float) -> str:
             non_zero_parts.append(part)
 
     return text + ":".join(f"{int(value)}{label}" for value, label in non_zero_parts)
+
+
+async def update_staking_observers_job(context: CallbackContext):
+    await asyncio.gather(
+        *[observer.update() for observer in context.bot_data["staking_observers"].values()],
+        return_exceptions=True,
+    )
+
+
+async def run_account_update_processor(context: CallbackContext):
+    asyncio.create_task(context.bot_data["account_update_processor"].worker())

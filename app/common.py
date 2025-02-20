@@ -2,8 +2,6 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Self
 
-from app.config import ChainConfig
-
 
 class Chain(StrEnum):
     optimism = "optimism"
@@ -48,14 +46,24 @@ class SNXData:
     period_updated: bool = False
 
 
+class ChainConfig:
+    def __init__(
+        self, chain: Chain, api: str, address_resolver_address: str, issuance_ratio: float
+    ):
+        self.chain = chain
+        self.api = api
+        self.address_resolver_address: str = address_resolver_address
+        self.issuance_ratio: float = issuance_ratio
+
+
 class SNXMultiChainData:
-    def __init__(self, chain_config: ChainConfig):
+    def __init__(self, chain_configs: dict[Chain, ChainConfig]):
         self._data: dict[Chain, SNXData] = {
             Chain.ethereum: SNXData(
-                chain=Chain.ethereum, issuance_ratio=chain_config.issuance_ratio
+                chain=Chain.ethereum, issuance_ratio=chain_configs[Chain.ethereum].issuance_ratio
             ),
             Chain.optimism: SNXData(
-                chain=Chain.optimism, issuance_ratio=chain_config.issuance_ratio
+                chain=Chain.optimism, issuance_ratio=chain_configs[Chain.optimism].issuance_ratio
             ),
         }
 

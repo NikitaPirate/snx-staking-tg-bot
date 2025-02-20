@@ -1,6 +1,6 @@
 import asyncio
 from collections.abc import Callable
-from typing import Self
+from typing import Self, TypeVar
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -10,6 +10,8 @@ from app.data_access.repositories import (
     ChatRepository,
     NotifRepository,
 )
+
+T = TypeVar("T")
 
 
 class UnitOfWork:
@@ -39,6 +41,9 @@ class UnitOfWork:
 
     async def rollback(self) -> None:
         await self._session.rollback()
+
+    async def merge(self, obj: T) -> T:
+        return await self._session.merge(obj)
 
     async def _close(self) -> None:
         await asyncio.shield(self._session.close())

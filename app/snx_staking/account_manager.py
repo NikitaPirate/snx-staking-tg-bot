@@ -79,6 +79,8 @@ class AccountManager:
             self._calculate_debt(account)
             self._calculate_c_ratio(account)
 
+            account.inited = True
+
             await self._updated_accounts_queue.put(account.id)
 
     async def update_accounts(self, events: dict) -> None:
@@ -94,7 +96,7 @@ class AccountManager:
         for address in addresses_to_update:
             events = address_to_event.get(address, [])
             tasks.append(asyncio.create_task(self._update_account(address, events)))
-        await asyncio.gather(*tasks)
+        await asyncio.gather(*tasks, return_exceptions=True)
 
     async def _update_account(self, address: str, events: list) -> None:
         async with self._uow_factory() as uow:

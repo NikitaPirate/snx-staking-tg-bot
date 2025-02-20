@@ -7,7 +7,7 @@ from telegram.ext import ConversationHandler
 from app.models import NotifType
 from app.telegram_bot import message_composer, utils
 from app.telegram_bot.constants import States
-from app.telegram_bot.dashboard import compose_dashboard_message
+from app.telegram_bot.dashboard import compose_dashboard_message, update_dashboard_message
 from app.telegram_bot.snx_bot_context import SnxBotContext
 
 
@@ -39,7 +39,8 @@ async def dashboard(update: Update, context: SnxBotContext) -> int:
     text = compose_dashboard_message(chat, context.snx_data)
     res: Message = await message_delivery(text=text)
 
-    async with context.uow_factory():
+    async with context.uow_factory() as uow:
+        chat = await uow.merge(chat)
         chat.dashboard_message_id = res.message_id
     return ConversationHandler.END
 
@@ -74,8 +75,10 @@ async def customize_account_display_menu(update: Update, context: SnxBotContext)
     chat_account = await context.get_current_chat_account()
     text, keyboard = message_composer.customize_account_display_menu(chat_account)
     await update.callback_query.edit_message_text(text=text, reply_markup=keyboard)
-    # if chat_account.chat.dashboard_message_id:
-    #     await dashboard_updater.update_dashboard(chat.id)
+    if chat_account.chat.dashboard_message_id:
+        await update_dashboard_message(
+            context.bot, chat_account.chat_id, context.uow_factory, context.snx_data
+        )
     return States.CUSTOMIZE_ACCOUNT_DISPLAY
 
 

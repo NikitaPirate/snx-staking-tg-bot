@@ -236,7 +236,7 @@ def info() -> str:
 
 def payday(snx_data: SNXMultiChainData) -> str:
     text = ""
-    for chain, period_end in snx_data.period_end_times():
+    for chain, period_end in snx_data.period_end_times().items():
         remaining_time = remaining_time_until(period_end)
         text += f"{chain}: {remaining_time}\n"
     return text

@@ -40,4 +40,4 @@ class SNXDataManager:
         """
         t_update_prices = asyncio.create_task(self._update_prices())
         t_check_period = asyncio.create_task(self._check_new_period())
-        await asyncio.gather(t_update_prices, t_check_period)
+        await asyncio.gather(t_update_prices, t_check_period, return_exceptions=True)

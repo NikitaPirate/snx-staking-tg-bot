@@ -10,6 +10,8 @@ from telegram.ext import Application, CallbackContext, ExtBot
 from app.common import Chain, SNXMultiChainData
 from app.data_access import UnitOfWork, UOWFactoryType
 from app.models import Account, Chat, ChatAccount, Notif, NotifType
+from app.snx_staking import StakingObserver
+from app.telegram_bot.account_update_processor import AccountUpdateProcessor
 
 T = TypeVar("T")
 
@@ -37,6 +39,8 @@ class BotData(TypedDict):
     snx_data: SNXMultiChainData
     uow_factory: UOWFactoryType
     new_accounts_queues: dict[Chain, asyncio.Queue[AnyAddress]]
+    staking_observers: dict[Chain, StakingObserver]
+    account_update_processor: AccountUpdateProcessor
 
 
 class SnxBotContext(CallbackContext[ExtBot, dict, ChatData, BotData]):
@@ -74,15 +78,19 @@ class SnxBotContext(CallbackContext[ExtBot, dict, ChatData, BotData]):
             chat = Chat(id=self._chat_id)
             await uow.chats.add(chat)
 
-    @with_uow
-    async def get_current_chat_account(self, *, uow: UnitOfWork) -> ChatAccount:
-        """Gets current chat or raises ChatNotFoundError"""
+    async def _get_current_chat_account(self, uow: UnitOfWork) -> ChatAccount:
+        """Internal version without UOW decorator"""
         chat_account = await uow.chat_accounts.get_by_id_or_none(
             self.chat_data["selected_chat_account"]
         )
         if chat_account is None:
             raise NotFoundError("ChatAccount")
         return chat_account
+
+    @with_uow
+    async def get_current_chat_account(self, *, uow: UnitOfWork) -> ChatAccount:
+        """Gets current chat or raises NotFoundError"""
+        return await self._get_current_chat_account(uow)
 
     @with_uow
     async def process_account_creating(
@@ -107,7 +115,7 @@ class SnxBotContext(CallbackContext[ExtBot, dict, ChatData, BotData]):
 
     @with_uow
     async def toggle_current_chat_account_setting(self, setting_name: str, *, uow: UnitOfWork):
-        chat_account = await self.get_current_chat_account(uow)
+        chat_account = await self._get_current_chat_account(uow)
         chat_account.update_settings(
             **{setting_name: not chat_account.account_settings[setting_name]}
         )
