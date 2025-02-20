@@ -4,6 +4,7 @@ import logging
 import time
 from collections import defaultdict
 from decimal import Decimal
+from uuid import UUID
 
 from eth_typing import Address, BlockIdentifier
 from eth_utils import to_checksum_address
@@ -23,12 +24,18 @@ class AccountManager:
     _uow_factory: UOWFactoryType
 
     def __init__(
-        self, chain: Chain, snx_data: SNXData, synthetix: Synthetix, uow_factory: UOWFactoryType
+        self,
+        chain: Chain,
+        snx_data: SNXData,
+        synthetix: Synthetix,
+        uow_factory: UOWFactoryType,
+        updated_accounts_queue: asyncio.Queue[UUID],
     ) -> None:
         self.chain = chain
         self._snx_data = snx_data
         self._synthetix = synthetix
         self._uow_factory = uow_factory
+        self._updated_accounts_queue: asyncio.Queue[UUID] = updated_accounts_queue
 
     async def init_accounts(
         self, addresses: list[Address], block_identifier: BlockIdentifier
@@ -72,6 +79,8 @@ class AccountManager:
             self._calculate_debt(account)
             self._calculate_c_ratio(account)
 
+            await self._updated_accounts_queue.put(account.id)
+
     async def update_accounts(self, events: dict) -> None:
         address_to_event = self._group_events(events)
 
@@ -111,6 +120,8 @@ class AccountManager:
 
             if collateral_updated or debt_updated:
                 self._calculate_c_ratio(account)
+
+            await self._updated_accounts_queue.put(account.id)
 
     # CALCULATIONS
     def _calculate_collateral(self, account: Account) -> None:
