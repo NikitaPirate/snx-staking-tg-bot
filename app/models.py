@@ -71,7 +71,7 @@ DEFAULT_CHAT_ACCOUNT_SETTINGS: ChatAccountSettings = {
 
 
 class ChatAccount(UUIDModel, table=True):
-    chat_id: int = Field(foreign_key="chat.id", ondelete="CASCADE")
+    chat_id: int = Field(foreign_key="chat.id", ondelete="CASCADE", sa_type=BigInteger)
     account_id: uuid.UUID = Field(foreign_key="account.id", ondelete="CASCADE")
     account_settings: ChatAccountSettings = Field(
         sa_column=Column(JSONB), default_factory=lambda: DEFAULT_CHAT_ACCOUNT_SETTINGS.copy()
