@@ -4,7 +4,7 @@ from telegram import Update
 from telegram import error as tg_error
 from telegram.ext import ContextTypes
 
-from app.telegram_bot import NotFoundError
+from app.telegram_bot.snx_bot_context import NotFoundError
 
 logger = logging.getLogger(__name__)
 
