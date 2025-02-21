@@ -9,6 +9,7 @@ from app.config import Config
 from app.data_access import UOWFactoryType, uow_factory_maker
 from app.snx_staking import AccountManager, SNXDataManager, StakingObserver, bootstrap_synthetix
 from app.telegram_bot.account_update_processor import AccountUpdateProcessor
+from app.telegram_bot.error_handler import error_handler
 from app.telegram_bot.handlers import handlers
 from app.telegram_bot.snx_bot_context import BotData, ChatData, SnxBotContext
 from app.telegram_bot.utils import run_account_update_processor, update_staking_observers_job
@@ -72,6 +73,7 @@ def bootstrap_telegram_bot(telegram_token: str):
     context_types = ContextTypes(context=SnxBotContext, chat_data=ChatData, bot_data=BotData)
     app = ApplicationBuilder().token(telegram_token).context_types(context_types).build()
     app.add_handlers(handlers)
+    app.add_error_handler(error_handler)
 
     return app
 
