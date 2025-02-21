@@ -4,6 +4,8 @@ from telegram import Update
 from telegram import error as tg_error
 from telegram.ext import ContextTypes
 
+from app.telegram_bot import NotFoundError
+
 logger = logging.getLogger(__name__)
 
 
@@ -21,6 +23,9 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
         pass
     elif isinstance(error, tg_error.TelegramError):
         logger.exception("Unexpected Telegram error: ", exc_info=error)
+    elif isinstance(error, NotFoundError):
+        text = "Please press /start for using the bot."
+        await update.effective_chat.send_message(text)
     else:
         if isinstance(update, Update):
             text = "An unknown error occurred. Please try /start and then repeat your command."
