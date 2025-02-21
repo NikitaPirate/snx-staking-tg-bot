@@ -10,11 +10,11 @@ from app.data_access import UOWFactoryType, uow_factory_maker
 from app.snx_staking import AccountManager, SNXDataManager, StakingObserver, bootstrap_synthetix
 from app.telegram_bot import (
     AccountUpdateProcessor,
-    error_handler,
-    handlers,
     BotData,
     ChatData,
     SnxBotContext,
+    error_handler,
+    handlers,
     run_account_update_processor,
     update_staking_observers_job,
 )

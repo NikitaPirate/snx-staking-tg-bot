@@ -27,15 +27,16 @@ def compose_dashboard_message(chat: Chat, snx_data: SNXMultiChainData) -> str:
             collateral = round(account.collateral / 10**36, 2)
             text += f"Collateral: {snx_count} SNX = ${collateral}\n"
         if settings["debt"]:
-            text += f"Debt: {round(account.debt / 10 ** 18, 2)} sUSD\n"
+            text += f"Debt: {round(account.debt / 10**18, 2)} sUSD\n"
         if settings["claimable_snx"]:
-            text += f"Claimable SNX: {round(account.claimable_snx / 10 ** 18, 2)}\n"
+            text += f"Claimable SNX: {round(account.claimable_snx / 10**18, 2)}\n"
         if settings["liquidation_deadline"]:
             if not account.liquidation_deadline:
                 liquidation_text = "Not flagged for liquidation"
             else:
                 liquidation_text = f"Liquidation deadline: {
-                    account.liquidation_deadline.strftime('%Y-%m-%d %H:%M:%S')}"
+                    account.liquidation_deadline.strftime('%Y-%m-%d %H:%M:%S')
+                }"
             text += liquidation_text + "\n"
         text += "\n"
     return text

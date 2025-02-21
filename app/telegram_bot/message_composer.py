@@ -128,7 +128,7 @@ def account_notifs_menu(notifs: list[Notif]) -> tuple[str, InlineKeyboardMarkup]
         button_text = NOTIF_TYPE_NAMES[notif.type]
         if notif.type is NotifType.ratio:
             button_text += " above" if notif.params["above"] else " below"
-            button_text += f" {round(notif.params["target"] * 100, 2)}%"
+            button_text += f" {round(notif.params['target'] * 100, 2)}%"
         button_text += " — delete"
         notif_button = [
             InlineKeyboardButton(
@@ -213,7 +213,7 @@ def render_notif(notif: Notif) -> tuple[str, InlineKeyboardMarkup]:
         direction = "above" if notif.params["above"] else "below"
         text = (
             f"{notif.account.address[:6]}... c-ratio {direction}"
-            f" {round(notif.params["target"] * 100, 2)}%"
+            f" {round(notif.params['target'] * 100, 2)}%"
         )
     else:
         text = f"{notif.account.address[:6]}... {NOTIF_TYPE_NAMES[notif.type]}"
