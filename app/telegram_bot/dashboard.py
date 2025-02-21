@@ -50,11 +50,19 @@ async def update_dashboard_message(
 ) -> None:
     async with uow_factory() as uow:
         chat = await uow.chats.get_one_or_none(Chat.id == chat_id)
+        if not chat.dashboard_message_id:
+            return
     text = compose_dashboard_message(chat, snx_data)
     try:
         await bot.edit_message_text(text, chat.id, chat.dashboard_message_id)
     except BadRequest as e:
-        if "Message is not modified:" not in e.message:
+        if "Message to edit not found" in e.message:
+            async with uow_factory() as uow:
+                chat = await uow.chats.get_one_or_none(Chat.id == chat_id)
+                chat.dashboard_message_id = None
+        elif "Message is not modified:" in e.message:
+            pass
+        else:
             logger.exception("Unexpected error while dashboard update:", exc_info=e)
     except Exception as e:
         logger.exception("Unexpected error while dashboard update:", exc_info=e)
