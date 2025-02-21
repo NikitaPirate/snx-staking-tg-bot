@@ -1,7 +1,6 @@
 import asyncio
 import datetime
 import logging
-import time
 from collections import defaultdict
 from decimal import Decimal
 from uuid import UUID
@@ -40,7 +39,6 @@ class AccountManager:
     async def init_accounts(
         self, addresses: list[Address], block_identifier: BlockIdentifier
     ) -> None:
-        start = time.time()
         await asyncio.gather(
             *[
                 asyncio.create_task(self._init_account(address, block_identifier))
@@ -48,7 +46,6 @@ class AccountManager:
             ],
             return_exceptions=True,
         )
-        logger.info(f"{self.chain.value} init in {time.time() - start}")
 
     async def init_all_accounts(self, block_identifier: BlockIdentifier) -> None:
         async with self._uow_factory() as uow:

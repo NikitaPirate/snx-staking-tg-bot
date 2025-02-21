@@ -1,7 +1,8 @@
 import logging
 
+from telegram import Update
+from telegram import error as tg_error
 from telegram.ext import ContextTypes
-from telegram import error as tg_error, Update
 
 logger = logging.getLogger(__name__)
 
@@ -14,9 +15,7 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
     """
     error = context.error
     if isinstance(error, tg_error.NetworkError):
-        if "Bad Gateway" in str(error):
-            pass
-        elif "httpx.ReadError" in str(error):
+        if "Bad Gateway" in str(error) or "httpx.ReadError" in str(error):
             pass
     elif isinstance(error, tg_error.TimedOut) and "Timed out" in str(error):
         pass

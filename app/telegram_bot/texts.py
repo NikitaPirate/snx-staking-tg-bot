@@ -22,23 +22,17 @@ info_command = """
 *Key Features:*
 __Dashboard Updates:__ The dashboard updates automatically whenever something changes.
 __Customizable Dashboard:__ You can customize your dashboard to suit your preferences.
-__Permanent Notifications:__ Notifications don't get deleted after being sent. They are
- temporarily disabled until the condition is met again, after which they are reactivated.
+__Permanent Notifications:__ Notifications don't get deleted after being sent. They are temporarily disabled until the condition is met again, after which they are reactivated.
 
 *Notifications:*
-__Ratio:__ You receive a notification when your account's collateral ratio crosses a specified
- threshold.
-__Rewards Claimable:__ You get notified when your account has claimable SNX rewards, and your
- c-ratio is above the system threshold.
-__Rewards Claimed:__ You get notified when SNX reward claimed. (may not work if you claim rewards
- within ≈ 1 minute after the epoch starts).
-__Flagged for Liquidation:__ You'll receive a notification if your account is flagged for
- liquidation.
+__Ratio:__ You receive a notification when your account's collateral ratio crosses a specified threshold.
+__Rewards Claimable:__ You get notified when your account has claimable SNX rewards, and your c-ratio is above the system threshold.
+__Rewards Claimed:__ You get notified when SNX reward claimed. (may not work if you claim rewards within ≈ 1 minute after the epoch starts).
+__Flagged for Liquidation:__ You'll receive a notification if your account is flagged for liquidation.
 
 *Tradeoffs:*
-The bot does not take into account until the end of the epoch: liquidation rewards, merged
- accounts. This will be taken into account with the beginning of a new epoch.
+The bot does not take into account until the end of the epoch: liquidation rewards, merged accounts. This will be taken into account with the beginning of a new epoch.
 
 *Bot discussion:* @snx\\_bot\\_discussion
 *Bot developer:*  @NikitaPirate
-"""
+"""  # noqa: E501

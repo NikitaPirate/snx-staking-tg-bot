@@ -16,7 +16,7 @@ def compose_dashboard_message(chat: Chat, snx_data: SNXMultiChainData) -> str:
         account = link.account
         settings = link.account_settings
         if not account.inited:
-            text += "Not initialized yet.\n\n"
+            text += "Not initialized yet. This may take up to 10 minutes.\n\n"
             continue
         if settings["address"]:
             text += f"{account.address[:6]}... {account.chain}\n"

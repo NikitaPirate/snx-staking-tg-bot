@@ -48,9 +48,11 @@ class StakingObserver:
         self._is_first_run = True
 
     async def _init(self):
+        now = time.time()
         current_block = await self._synthetix.get_block_num()
         await self._snx_data_manager.update()
         await self._account_manager.init_all_accounts(current_block)
+        logger.info(f"{self.chain} init in {time.time() - now}")
 
         now = time.time()
         self._last_contracts_check = now
