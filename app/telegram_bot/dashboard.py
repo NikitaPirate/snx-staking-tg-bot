@@ -1,7 +1,9 @@
 import logging
 
+import httpx
 from telegram import Bot
-from telegram.error import BadRequest
+from telegram.error import BadRequest, NetworkError
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from app.common import SNXMultiChainData
 from app.data_access import UOWFactoryType
@@ -42,6 +44,16 @@ def compose_dashboard_message(chat: Chat, snx_data: SNXMultiChainData) -> str:
     return text
 
 
+@retry(
+    retry=retry_if_exception_type((NetworkError, httpx.ReadError)),
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=4, max=10),
+    reraise=True,
+)
+async def edit_message_with_retries(bot: Bot, text: str, chat_id: int, message_id: int) -> None:
+    await bot.edit_message_text(text, chat_id, message_id)
+
+
 async def update_dashboard_message(
     bot: Bot,
     chat_id: int,
@@ -54,7 +66,7 @@ async def update_dashboard_message(
             return
     text = compose_dashboard_message(chat, snx_data)
     try:
-        await bot.edit_message_text(text, chat.id, chat.dashboard_message_id)
+        await edit_message_with_retries(bot, text, chat.id, chat.dashboard_message_id)
     except BadRequest as e:
         if "Message to edit not found" in e.message:
             async with uow_factory() as uow:
@@ -68,6 +80,8 @@ async def update_dashboard_message(
         elif "Message is not modified:" in e.message:
             pass
         else:
-            logger.exception("Unexpected error while dashboard update:", exc_info=e)
+            logger.exception("Unexpected BadRequest error while dashboard update:", exc_info=e)
+    except (NetworkError, httpx.ReadError) as e:
+        logger.error("Network error persisted after all retries:", exc_info=e)
     except Exception as e:
         logger.exception("Unexpected error while dashboard update:", exc_info=e)
