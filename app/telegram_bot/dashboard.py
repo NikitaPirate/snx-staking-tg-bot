@@ -60,6 +60,11 @@ async def update_dashboard_message(
             async with uow_factory() as uow:
                 chat = await uow.chats.get_one_or_none(Chat.id == chat_id)
                 chat.dashboard_message_id = None
+        elif "Chat not found" in e.message:
+            async with uow_factory() as uow:
+                chat = await uow.chats.get_one_or_none(Chat.id == chat_id)
+                await uow.chats.delete(chat)
+                logger.info(f"Chat: {chat.id}")
         elif "Message is not modified:" in e.message:
             pass
         else:
