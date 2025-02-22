@@ -145,7 +145,6 @@ class Notif(UUIDModel, table=True):
     chat_account: "ChatAccount" = Relationship(
         back_populates="notifs",
         sa_relationship_kwargs={
-            "cascade": "all",
             "lazy": "selectin",
         },
     )
