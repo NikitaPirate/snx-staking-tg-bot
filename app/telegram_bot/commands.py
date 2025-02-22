@@ -1,3 +1,4 @@
+import contextlib
 from collections.abc import Callable
 from uuid import UUID
 
@@ -55,7 +56,7 @@ async def accounts_menu(update: Update, context: SnxBotContext) -> str:
 
 
 async def account_menu(update: Update, context: SnxBotContext) -> str:
-    if update.callback_query and update.callback_query.data:
+    with contextlib.suppress(AttributeError, ValueError):
         context.chat_data["selected_chat_account"] = UUID(update.callback_query.data)
     text, keyboard = message_composer.account_menu()
     await update.callback_query.edit_message_text(text=text, reply_markup=keyboard)
