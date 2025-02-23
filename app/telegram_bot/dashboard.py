@@ -46,8 +46,8 @@ def compose_dashboard_message(chat: Chat, snx_data: SNXMultiChainData) -> str:
 
 @retry(
     retry=retry_if_exception_type((NetworkError, httpx.ReadError)),
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=4, max=10),
+    stop=stop_after_attempt(5),
+    wait=wait_exponential(multiplier=1, min=1, max=10),
     reraise=True,
 )
 async def edit_message_with_retries(bot: Bot, text: str, chat_id: int, message_id: int) -> None:
@@ -81,7 +81,7 @@ async def update_dashboard_message(
             pass
         else:
             logger.exception("Unexpected BadRequest error while dashboard update:", exc_info=e)
-    except (NetworkError, httpx.ReadError) as e:
-        logger.error("Network error persisted after all retries:", exc_info=e)
+    except (NetworkError, httpx.ReadError):
+        logger.error("Network error persisted after all retries while dashboard update")
     except Exception as e:
         logger.exception("Unexpected error while dashboard update:", exc_info=e)
