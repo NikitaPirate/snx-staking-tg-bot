@@ -140,6 +140,8 @@ class AccountManager:
     # EVENTS
     def _group_events(self, events: dict[str, list[EventData]]) -> dict[str, list]:
         """:returns dict{address: events}"""
+        if not events:
+            return {}
         events_by_address = defaultdict(list)
 
         # handle transfer events
