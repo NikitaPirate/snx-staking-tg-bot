@@ -66,10 +66,11 @@ class ContractManager:
             contract_address: Address = await self._fetch_contract_address(contract_name)
         self._contract_addresses[contract_name] = contract_address
 
+        target_address = contract_address
         if contract_name.startswith("Proxy"):
             proxy_contract = self._web3.eth.contract(address=contract_address, abi=proxy_abi)
-            contract_address = await self._raw_contract_call(proxy_contract, "target", "latest")
-        abi = await self._get_contract_abi(contract_address)
+            target_address = await self._raw_contract_call(proxy_contract, "target", "latest")
+        abi = await self._get_contract_abi(target_address)
         contract = self._web3.eth.contract(address=contract_address, abi=abi)
 
         self._contracts[contract_name] = contract

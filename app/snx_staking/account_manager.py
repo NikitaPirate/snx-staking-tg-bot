@@ -7,6 +7,7 @@ from uuid import UUID
 
 from eth_typing import Address, BlockIdentifier
 from eth_utils import to_checksum_address
+from web3.types import EventData
 
 from app.common import Chain, SNXData
 from app.data_access import UOWFactoryType
@@ -137,36 +138,41 @@ class AccountManager:
             account.c_ratio = 0
 
     # EVENTS
-    def _group_events(self, events: dict) -> dict[str, list]:
+    def _group_events(self, events: dict[str, list[EventData]]) -> dict[str, list]:
         """:returns dict{address: events}"""
         events_by_address = defaultdict(list)
 
         # handle transfer events
-        transfers = events.pop("transfer", [])
+        transfers = events.pop("Transfer")
         split_transfers = self._split_transfer_events(transfers)
         if split_transfers:
             events.update(split_transfers)
 
         for event_type, event_list in events.items():
             for event in event_list:
-                events_by_address[event["address"]].append({"type": event_type, **event})
+                events_by_address[event["args"]["account"]].append(
+                    {"type": event_type, **event["args"]}
+                )
 
         return events_by_address
 
-    def _split_transfer_events(self, transfers: list) -> dict[str, list]:
+    def _split_transfer_events(self, transfers: list[EventData]) -> dict[str, list]:
         events = defaultdict(list)
-
         for transfer in transfers:
-            if transfer.from_address == self._synthetix.vesting_contract_address:
+            if transfer["args"]["from"] == self._synthetix.vesting_contract_address:
                 continue
 
             events[EventName.SEND].append(
-                {"account": transfer["from"], "amount": transfer["value"]}
+                {
+                    "args": {
+                        "account": transfer["args"]["from"],
+                        "amount": transfer["args"]["value"],
+                    }
+                }
             )
             events[EventName.RECEIVE].append(
-                {"account": transfer["to"], "amount": transfer["value"]}
+                {"args": {"account": transfer["args"]["to"], "amount": transfer["args"]["value"]}}
             )
-
         return events
 
     @staticmethod
