@@ -60,6 +60,12 @@ class StakingObserver:
         self._last_checked_events_block = current_block
 
     async def update(self):
+        try:
+            await self._update()
+        except Exception as e:
+            logger.error("Unexpected exception in StakingObserver:", exc_info=e)
+
+    async def _update(self):
         if self._is_first_run:
             await self._synthetix.install_contracts()
             await self._init()
