@@ -1,4 +1,5 @@
 import asyncio
+from asyncio import Semaphore
 
 from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -92,6 +93,7 @@ def bootstrap_staking_observers(
     updates_accounts_queue: asyncio.Queue,
 ) -> dict[Chain, StakingObserver]:
     staking_observers = {}
+    web3_semaphore = asyncio.Semaphore(5)
 
     for chain, chain_config in chain_configs.items():
         staking_observers[chain] = bootstrap_chain(
@@ -101,6 +103,7 @@ def bootstrap_staking_observers(
             snx_multichain_data[chain],
             updates_accounts_queue,
             new_accounts_queues[chain],
+            web3_semaphore,
         )
     return staking_observers
 
@@ -112,8 +115,9 @@ def bootstrap_chain(
     snx_data: SNXData,
     updated_accounts_queue: asyncio.Queue,
     new_accounts_queue: asyncio.Queue,
+    web3_semaphore: Semaphore,
 ) -> StakingObserver:
-    synthetix = bootstrap_synthetix(chain_config, etherscan_key)
+    synthetix = bootstrap_synthetix(chain_config, etherscan_key, web3_semaphore)
 
     snx_data_manager = SNXDataManager(synthetix, snx_data)
     account_manager = AccountManager(
