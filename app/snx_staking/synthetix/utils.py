@@ -1,10 +1,8 @@
 from asyncio import Semaphore
-from typing import Any, Protocol, Union
+from typing import Union
 
-from eth_typing import BlockIdentifier
 from toolz import curry
 from web3 import AsyncWeb3, Web3
-from web3.contract.async_contract import AsyncContract, AsyncContractFunction
 from web3.middleware import Web3Middleware
 from web3.middleware.base import Web3MiddlewareBuilder
 
@@ -14,37 +12,6 @@ SNX_bytes = "0x534e580000000000000000000000000000000000000000000000000000000000"
 
 def str_to_bytes32(text: str) -> bytes:
     return Web3.to_bytes(hexstr=Web3.to_hex(text=text)).ljust(32, b"\00")
-
-
-# Raw contract call
-
-
-class RawContractCall(Protocol):
-    async def __call__(
-        self,
-        contract: AsyncContract,
-        function_name: str,
-        block_identifier: BlockIdentifier,
-        *args: Any,
-        **kwargs: Any,
-    ) -> Any: ...  # noqa: ANN401
-
-
-def create_raw_contract_call() -> RawContractCall:
-    async def raw_contract_call(
-        contract: AsyncContract,
-        function_name: str,
-        block_identifier: BlockIdentifier,
-        *args: Any,
-        **kwargs: Any,
-    ) -> Any:  # noqa: ANN401
-        function: AsyncContractFunction = getattr(contract.functions, function_name)(
-            *args, **kwargs
-        )
-
-        return await function.call(block_identifier=block_identifier)
-
-    return raw_contract_call
 
 
 class SemaphoreMiddleware(Web3MiddlewareBuilder):

@@ -12,7 +12,7 @@ from app.common import Chain, ChainConfig
 from app.snx_staking.synthetix.constants import ContractName, contract_to_events
 from app.snx_staking.synthetix.contract_caller import ContractCaller
 from app.snx_staking.synthetix.contract_manager import ContractManager
-from app.snx_staking.synthetix.utils import SemaphoreMiddleware, create_raw_contract_call
+from app.snx_staking.synthetix.utils import SemaphoreMiddleware
 
 
 class AddressData(NamedTuple):
@@ -108,14 +108,12 @@ def bootstrap_synthetix(
     semaphore_middleware = SemaphoreMiddleware.build(semaphore)
     web3.middleware_onion.inject(semaphore_middleware, layer=0)
 
-    raw_contract_call = create_raw_contract_call()
     contract_manager = ContractManager(
         chain_config.chain,
         web3,
-        raw_contract_call,
         chain_config.address_resolver_address,
         etherscan_key,
     )
-    contract_caller = ContractCaller(contract_manager, raw_contract_call)
+    contract_caller = ContractCaller(contract_manager)
     synthetix = Synthetix(chain_config.chain, web3, contract_manager, contract_caller)
     return synthetix
