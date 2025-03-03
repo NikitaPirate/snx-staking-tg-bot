@@ -1,8 +1,10 @@
 import asyncio
 from typing import NamedTuple
 
+import aiohttp
 from eth_typing import AnyAddress
 from web3 import AsyncHTTPProvider, AsyncWeb3
+from web3.providers.rpc.utils import REQUEST_RETRY_ALLOWLIST, ExceptionRetryConfiguration
 from web3.types import BlockIdentifier
 
 from app.common import Chain, ChainConfig
@@ -83,7 +85,22 @@ class Synthetix:
 
 
 def bootstrap_synthetix(chain_config: ChainConfig, etherscan_key: str) -> Synthetix:
-    web3 = AsyncWeb3(AsyncHTTPProvider(chain_config.api))
+    web3 = AsyncWeb3(
+        AsyncHTTPProvider(
+            chain_config.api,
+            exception_retry_configuration=ExceptionRetryConfiguration(
+                errors=[
+                    ConnectionError,
+                    aiohttp.ClientError,
+                    asyncio.TimeoutError,
+                    aiohttp.client_exceptions.ClientResponseError,
+                ],
+                retries=10,
+                backoff_factor=0.125,
+                method_allowlist=REQUEST_RETRY_ALLOWLIST,
+            ),
+        )
+    )
     raw_contract_call = create_raw_contract_call()
     contract_manager = ContractManager(
         chain_config.chain,

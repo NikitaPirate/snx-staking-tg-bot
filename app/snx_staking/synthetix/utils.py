@@ -2,7 +2,6 @@ from asyncio import Semaphore
 from typing import Any, Protocol
 
 from eth_typing import BlockIdentifier
-from tenacity import retry, stop_after_delay, wait_exponential
 from web3 import Web3
 from web3.contract.async_contract import AsyncContract, AsyncContractFunction
 
@@ -31,7 +30,6 @@ class RawContractCall(Protocol):
 def create_raw_contract_call(max_parallel_calls: int = 10) -> RawContractCall:
     semaphore: Semaphore = Semaphore(max_parallel_calls)
 
-    @retry(wait=wait_exponential(max=60), stop=stop_after_delay(600))
     async def raw_contract_call(
         contract: AsyncContract,
         function_name: str,
